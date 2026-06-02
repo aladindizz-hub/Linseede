@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/dialog/dialog_notifier.dart';
 import 'package:hiddify/core/router/go_router/helper/active_breakpoint_notifier.dart';
+import 'package:hiddify/core/theme/color_theme_preferences.dart';
+import 'package:hiddify/core/theme/widget/theme_picker_sheet.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/settings/notifier/config_option/config_option_notifier.dart';
 import 'package:hiddify/features/settings/notifier/reset_tunnel/reset_tunnel_notifier.dart';
@@ -18,51 +20,30 @@ enum ConfigOptionSection {
   static final _fragmentKey = GlobalKey(debugLabel: "fragment-section-key");
 
   GlobalKey get key => switch (this) {
-    ConfigOptionSection.warp => _warpKey,
-    ConfigOptionSection.fragment => _fragmentKey,
-  };
+        ConfigOptionSection.warp => _warpKey,
+        ConfigOptionSection.fragment => _fragmentKey,
+      };
 }
 
 class SettingsPage extends HookConsumerWidget {
   SettingsPage({super.key, String? section})
-    : section = section != null ? ConfigOptionSection.values.byName(section) : null;
+      : section = section != null ? ConfigOptionSection.values.byName(section) : null;
 
   final ConfigOptionSection? section;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider).requireValue;
-    // final scrollController = useScrollController();
-
-    // useMemoized(
-    //   () {
-    //     if (section != null) {
-    //       WidgetsBinding.instance.addPostFrameCallback(
-    //         (_) {
-    //           final box = section!.key.currentContext?.findRenderObject() as RenderBox?;
-
-    //           final offset = box?.localToGlobal(Offset.zero);
-    //           if (offset == null) return;
-    //           final height = scrollController.offset + offset.dy - MediaQueryData.fromView(View.of(context)).padding.top - kToolbarHeight;
-    //           scrollController.animateTo(
-    //             height,
-    //             duration: const Duration(milliseconds: 500),
-    //             curve: Curves.decelerate,
-    //           );
-    //         },
-    //       );
-    //     }
-    //   },
-    // );
+    final currentTheme = ref.watch(colorThemePreferencesProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(t.pages.settings.title),
         actions: [
           MenuAnchor(
-            menuChildren: <Widget>[
+            menuChildren: [
               SubmenuButton(
-                menuChildren: <Widget>[
+                menuChildren: [
                   MenuItemButton(
                     onPressed: () async => await ref
                         .read(dialogNotifierProvider.notifier)
@@ -71,10 +52,10 @@ class SettingsPage extends HookConsumerWidget {
                           message: t.dialogs.confirmation.settings.import.msg,
                         )
                         .then((shouldImport) async {
-                          if (shouldImport) {
-                            await ref.read(configOptionNotifierProvider.notifier).importFromClipboard();
-                          }
-                        }),
+                      if (shouldImport) {
+                        await ref.read(configOptionNotifierProvider.notifier).importFromClipboard();
+                      }
+                    }),
                     child: Text(t.pages.settings.options.import.clipboard),
                   ),
                   MenuItemButton(
@@ -85,17 +66,17 @@ class SettingsPage extends HookConsumerWidget {
                           message: t.dialogs.confirmation.settings.import.msg,
                         )
                         .then((shouldImport) async {
-                          if (shouldImport) {
-                            await ref.read(configOptionNotifierProvider.notifier).importFromJsonFile();
-                          }
-                        }),
+                      if (shouldImport) {
+                        await ref.read(configOptionNotifierProvider.notifier).importFromJsonFile();
+                      }
+                    }),
                     child: Text(t.pages.settings.options.import.file),
                   ),
                 ],
                 child: Text(t.common.import),
               ),
               SubmenuButton(
-                menuChildren: <Widget>[
+                menuChildren: [
                   MenuItemButton(
                     onPressed: () async => await ref.read(configOptionNotifierProvider.notifier).exportJsonClipboard(),
                     child: Text(t.pages.settings.options.export.anonymousToClipboard),
@@ -141,7 +122,16 @@ class SettingsPage extends HookConsumerWidget {
       ),
       body: ListView(
         children: [
-          // TipCard(message: t.settings.experimentalMsg),
+          Material(
+            child: ListTile(
+              leading: const Icon(Icons.palette_rounded),
+              title: const Text('Тема оформления'),
+              subtitle: Text('${currentTheme.displayName} · ${currentTheme.tagline}'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => ThemePickerSheet.show(context),
+            ),
+          ),
+          const Divider(height: 1),
           SettingsSection(
             title: t.pages.settings.general.title,
             icon: Icons.layers_rounded,
