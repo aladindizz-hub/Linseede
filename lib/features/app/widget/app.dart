@@ -1,5 +1,4 @@
 import 'package:accessibility_tools/accessibility_tools.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,8 +10,8 @@ import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
 import 'package:hiddify/core/router/go_router/go_router_notifier.dart';
 import 'package:hiddify/core/router/go_router/helper/active_breakpoint_notifier.dart';
-import 'package:hiddify/core/theme/app_theme.dart';
-import 'package:hiddify/core/theme/theme_preferences.dart';
+import 'package:hiddify/core/theme/color_theme_preferences.dart';
+import 'package:hiddify/core/theme/linseede_theme.dart';
 import 'package:hiddify/features/app_update/notifier/app_update_notifier.dart';
 import 'package:hiddify/features/connection/widget/connection_wrapper.dart';
 import 'package:hiddify/features/per_app_proxy/overview/per_app_proxy_service_notifier.dart';
@@ -43,11 +42,12 @@ class App extends HookConsumerWidget with WidgetsBindingObserver, PresLogger {
   }
 
   void onResume(WidgetRef ref) {
-    // if (PlatformUtils.isDesktop) return;
     ref.read(hiddifyCoreServiceProvider).init();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (isOnPauseCalled && PlatformUtils.isAndroid) ref.invalidate(perAppProxyServiceProvider);
+      if (isOnPauseCalled && PlatformUtils.isAndroid) {
+        ref.invalidate(perAppProxyServiceProvider);
+      }
       isOnPauseCalled = false;
     });
   }
@@ -57,8 +57,8 @@ class App extends HookConsumerWidget with WidgetsBindingObserver, PresLogger {
     setupStateListener(ref);
     final router = ref.watch(goRouterNotiferProvider);
     final locale = ref.watch(localePreferencesProvider);
-    final themeMode = ref.watch(themePreferencesProvider);
-    final theme = AppTheme(themeMode, locale.preferredFontFamily);
+    final colorTheme = ref.watch(colorThemePreferencesProvider);
+    final themeData = LinseedeTheme.build(colorTheme);
     final upgrader = ref.watch(upgraderProvider);
     final activeBreakpoint = Breakpoint(context).activeBreakpoint;
 
@@ -66,50 +66,46 @@ class App extends HookConsumerWidget with WidgetsBindingObserver, PresLogger {
     if (PlatformUtils.isAndroid) ref.listen(perAppProxyServiceProvider, (_, _) {});
     if (PlatformUtils.isDesktop) ref.listen(systemTrayNotifierProvider, (_, _) {});
 
-    // updating ActiveBreakpointNotifier value
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(activeBreakpointNotifierProvider.notifier).update(activeBreakpoint);
       });
       return null;
     }, [activeBreakpoint]);
+
     return WindowWrapper(
       ShortcutWrapper(
         ToastificationWrapper(
           child: ConnectionWrapper(
-            DynamicColorBuilder(
-              builder: (ColorScheme? lightColorScheme, ColorScheme? darkColorScheme) {
-                return MaterialApp.router(
-                  routerConfig: router,
-                  locale: locale.flutterLocale,
-                  supportedLocales: AppLocaleUtils.supportedLocales,
-                  localizationsDelegates: GlobalMaterialLocalizations.delegates,
-                  debugShowCheckedModeBanner: false,
-                  themeMode: themeMode.flutterThemeMode,
-                  theme: theme.lightTheme(lightColorScheme),
-                  darkTheme: theme.darkTheme(darkColorScheme),
-                  title: Constants.appName,
-                  builder: (context, child) {
-                    final theme = Theme.of(context);
-                    child = UpgradeAlert(
-                      upgrader: upgrader,
-                      navigatorKey: router.routerDelegate.navigatorKey,
-                      child: child ?? const SizedBox(),
-                    );
-                    if (kDebugMode && _debugAccessibility) {
-                      return AccessibilityTools(checkFontOverflows: true, child: child);
-                    }
-                    return AnnotatedRegion<SystemUiOverlayStyle>(
-                      value: SystemUiOverlayStyle(
-                        statusBarColor: theme.scaffoldBackgroundColor,
-                        systemNavigationBarColor: theme.scaffoldBackgroundColor,
-                        systemNavigationBarIconBrightness: theme.brightness == Brightness.dark
-                            ? Brightness.light
-                            : Brightness.dark,
-                      ),
-                      child: child,
-                    );
-                  },
+            MaterialApp.router(
+              routerConfig: router,
+              locale: locale.flutterLocale,
+              supportedLocales: AppLocaleUtils.supportedLocales,
+              localizationsDelegates: GlobalMaterialLocalizations.delegates,
+              debugShowCheckedModeBanner: false,
+              themeMode: colorTheme.isLight ? ThemeMode.light : ThemeMode.dark,
+              theme: themeData,
+              darkTheme: themeData,
+              title: Constants.appName,
+              builder: (context, child) {
+                final theme = Theme.of(context);
+                child = UpgradeAlert(
+                  upgrader: upgrader,
+                  navigatorKey: router.routerDelegate.navigatorKey,
+                  child: child ?? const SizedBox(),
+                );
+                if (kDebugMode && _debugAccessibility) {
+                  return AccessibilityTools(checkFontOverflows: true, child: child);
+                }
+                return AnnotatedRegion(
+                  value: SystemUiOverlayStyle(
+                    statusBarColor: theme.scaffoldBackgroundColor,
+                    systemNavigationBarColor: theme.scaffoldBackgroundColor,
+                    systemNavigationBarIconBrightness: theme.brightness == Brightness.dark
+                        ? Brightness.light
+                        : Brightness.dark,
+                  ),
+                  child: child,
                 );
               },
             ),
@@ -118,68 +114,6 @@ class App extends HookConsumerWidget with WidgetsBindingObserver, PresLogger {
       ),
     );
   }
-
-  // @override
-  // Widget build1(BuildContext context, WidgetRef ref) {
-  //   setupStateListener(ref);
-  //   // setupQuickSettings(ref);
-  //   final router = ref.watch(routerProvider);
-  //   final locale = ref.watch(localePreferencesProvider);
-  //   final themeMode = ref.watch(themePreferencesProvider);
-  //   final theme = AppTheme(themeMode, locale.preferredFontFamily);
-  //   final upgrader = ref.watch(upgraderProvider);
-
-  //   ref.listen(foregroundProfilesUpdateNotifierProvider, (_, __) {});
-
-  //   return WindowWrapper(
-  //     TrayWrapper(
-  //       ShortcutWrapper(
-  //         ConnectionWrapper(
-  //           PlatformProvider(
-  //               settings: PlatformSettingsData(
-  //                 iosUsesMaterialWidgets: true,
-  //               ),
-  //               builder: (context) => DynamicColorBuilder(
-  //                     builder: (ColorScheme? lightColorScheme, ColorScheme? darkColorScheme) {
-  //                       return PlatformApp.router(
-  //                         routerConfig: router,
-  //                         locale: locale.flutterLocale,
-  //                         supportedLocales: AppLocaleUtils.supportedLocales,
-  //                         localizationsDelegates: GlobalMaterialLocalizations.delegates,
-  //                         debugShowCheckedModeBanner: false,
-  //                         material: (context, platform) => MaterialAppRouterData(
-  //                           theme: theme.lightTheme(lightColorScheme),
-  //                           darkTheme: theme.darkTheme(darkColorScheme),
-  //                           themeMode: themeMode.flutterThemeMode,
-  //                         ),
-  //                         cupertino: (context, platform) {
-  //                           final sysDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
-  //                           return CupertinoAppRouterData(theme: theme.cupertinoThemeData(sysDark, lightColorScheme, darkColorScheme));
-  //                         },
-  //                         title: Constants.appName,
-  //                         builder: (context, child) {
-  //                           child = UpgradeAlert(
-  //                             upgrader: upgrader,
-  //                             navigatorKey: router.routerDelegate.navigatorKey,
-  //                             child: child ?? const SizedBox(),
-  //                           );
-  //                           if (kDebugMode && _debugAccessibility) {
-  //                             return AccessibilityTools(
-  //                               checkFontOverflows: true,
-  //                               child: child,
-  //                             );
-  //                           }
-  //                           return child;
-  //                         },
-  //                       );
-  //                     },
-  //                   )),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   void setupStateListener(WidgetRef ref) {
     final appLifecycleState = useAppLifecycleState();
