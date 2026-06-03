@@ -27,7 +27,7 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
 
     TextStyle labelStyle() => TextStyle(
           fontFamily: TypographyTokens.fontFamily,
@@ -47,7 +47,7 @@ class InfoCard extends StatelessWidget {
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      radius: RadiusTokens.rMedium,
+      radius: RadiusTokens.medium,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,8 +117,8 @@ class InfoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentTheme = Theme.of(context).extension<AccentTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final accentTheme = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
     final color = _color(accentTheme, surface);
 
     return Row(
