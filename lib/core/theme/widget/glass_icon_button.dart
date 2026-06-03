@@ -26,8 +26,8 @@ class GlassIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glass = Theme.of(context).extension<GlassTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final glass = Theme.of(context).extensions[GlassTheme]! as GlassTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
     final br = BorderRadius.circular(borderRadius);
 
     return Stack(
