@@ -48,8 +48,6 @@ class ServerListItem extends StatelessWidget {
       active = 3;
     } else if (p < 150) {
       active = 2;
-    } else if (p < 250) {
-      active = 1;
     } else {
       active = 1;
     }
@@ -75,13 +73,13 @@ class ServerListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).extension<AccentTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final accent = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
     final pingColor = _pingColor(accent, surface);
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      radius: RadiusTokens.rMedium,
+      radius: RadiusTokens.medium,
       borderColor: isActive ? accent.primary.withOpacity(0.5) : null,
       onTap: onTap,
       child: Row(
