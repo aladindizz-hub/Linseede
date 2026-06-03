@@ -36,7 +36,7 @@ class AuroraBackground extends HookWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: ColoredBox(color: surface.background),
+          child: ColoredBox(color: surface.bgPrimary),
         ),
         Positioned.fill(
           child: AnimatedBuilder(
