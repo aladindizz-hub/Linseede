@@ -1,13 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hiddify/core/theme/extensions/accent_theme.dart';
 import 'package:hiddify/core/theme/extensions/surface_theme.dart';
 import 'package:hiddify/core/theme/tokens/typography_tokens.dart';
 
 enum ConnectState { disconnected, connecting, connected, error }
 
-class HeroConnectButton extends StatefulWidget {
+class HeroConnectButton extends HookWidget {
   const HeroConnectButton({
     super.key,
     required this.state,
@@ -23,33 +24,8 @@ class HeroConnectButton extends StatefulWidget {
   final double size;
   final String? label;
 
-  @override
-  State<HeroConnectButton> createState() => _HeroConnectButtonState();
-}
-
-class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProviderStateMixin {
-  late final AnimationController _rotate;
-  late final AnimationController _pulse;
-  late final AnimationController _particles;
-
-  @override
-  void initState() {
-    super.initState();
-    _rotate = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat(reverse: true);
-    _particles = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
-  }
-
-  @override
-  void dispose() {
-    _rotate.dispose();
-    _pulse.dispose();
-    _particles.dispose();
-    super.dispose();
-  }
-
   Color _stateColor(AccentTheme a) {
-    switch (widget.state) {
+    switch (state) {
       case ConnectState.disconnected:
         return a.primary;
       case ConnectState.connecting:
@@ -62,7 +38,7 @@ class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProvid
   }
 
   String _defaultLabel() {
-    switch (widget.state) {
+    switch (state) {
       case ConnectState.disconnected:
         return 'Tap to Connect';
       case ConnectState.connecting:
@@ -76,29 +52,33 @@ class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).extension<AccentTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final rotate = useAnimationController(duration: const Duration(seconds: 2))..repeat();
+    final pulse = useAnimationController(duration: const Duration(milliseconds: 2400))..repeat(reverse: true);
+    final particles = useAnimationController(duration: const Duration(seconds: 8))..repeat();
+
+    final accent = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
     final color = _stateColor(accent);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: widget.size,
-          height: widget.size,
+          width: size,
+          height: size,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: widget.onTap,
-            onLongPress: widget.onLongPress,
+            onTap: onTap,
+            onLongPress: onLongPress,
             child: AnimatedBuilder(
-              animation: Listenable.merge([_rotate, _pulse, _particles]),
+              animation: Listenable.merge([rotate, pulse, particles]),
               builder: (context, _) {
-                final pulseT = (math.sin(_pulse.value * math.pi * 2) + 1) / 2;
-                final scale = widget.state == ConnectState.connected ? 1.0 + pulseT * 0.02 : 1.0;
-                final rotation = widget.state == ConnectState.connecting ? _rotate.value * math.pi * 2 : 0.0;
-                final glowStrength = widget.state == ConnectState.connected
+                final pulseT = (math.sin(pulse.value * math.pi * 2) + 1) / 2;
+                final scale = state == ConnectState.connected ? 1.0 + pulseT * 0.02 : 1.0;
+                final rotation = state == ConnectState.connecting ? rotate.value * math.pi * 2 : 0.0;
+                final glowStrength = state == ConnectState.connected
                     ? 0.55 + pulseT * 0.25
-                    : widget.state == ConnectState.disconnected
+                    : state == ConnectState.disconnected
                         ? 0.35
                         : 0.5;
 
@@ -115,11 +95,11 @@ class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProvid
                       child: Transform.rotate(
                         angle: rotation,
                         child: CustomPaint(
-                          size: Size.square(widget.size),
+                          size: Size.square(size),
                           painter: _RingPainter(
                             color: color,
                             secondary: accent.secondary,
-                            sweep: widget.state == ConnectState.connecting,
+                            sweep: state == ConnectState.connecting,
                           ),
                         ),
                       ),
@@ -128,14 +108,14 @@ class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProvid
                       child: CustomPaint(
                         painter: _ParticlesPainter(
                           color: color,
-                          progress: _particles.value,
-                          intensity: widget.state == ConnectState.disconnected ? 0.4 : 1.0,
+                          progress: particles.value,
+                          intensity: state == ConnectState.disconnected ? 0.4 : 1.0,
                         ),
                       ),
                     ),
                     Container(
-                      width: widget.size * 0.46,
-                      height: widget.size * 0.46,
+                      width: size * 0.46,
+                      height: size * 0.46,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
@@ -149,7 +129,7 @@ class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProvid
                       alignment: Alignment.center,
                       child: Icon(
                         Icons.power_settings_new_rounded,
-                        size: widget.size * 0.22,
+                        size: size * 0.22,
                         color: color,
                       ),
                     ),
@@ -161,7 +141,7 @@ class _HeroConnectButtonState extends State<HeroConnectButton> with TickerProvid
         ),
         const SizedBox(height: 12),
         Text(
-          widget.label ?? _defaultLabel(),
+          label ?? _defaultLabel(),
           style: TextStyle(
             fontFamily: TypographyTokens.fontFamily,
             fontSize: 14,
@@ -253,7 +233,8 @@ class _GlowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _GlowPainter old) => old.color != color || old.strength != strength;
+  bool shouldRepaint(covariant _GlowPainter old) =>
+      old.color != color || old.strength != strength;
 }
 
 class _ParticlesPainter extends CustomPainter {
