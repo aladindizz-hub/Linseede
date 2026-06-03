@@ -121,9 +121,7 @@ class HeroConnectButton extends HookWidget {
                     ],
                   ),
                   border: Border.all(color: glass.border, width: 1),
-                  boxShadow: [
-                    ShadowTokens.glowFromColor(color, opacity: 0.45, blur: 32),
-                  ],
+                  boxShadow: ShadowTokens.glowFromColor(color, opacity: 0.45, blur: 32),
                 ),
                 child: Icon(
                   Icons.power_settings_new_rounded,
