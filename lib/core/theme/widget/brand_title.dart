@@ -17,8 +17,8 @@ class BrandTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).extension<AccentTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final accent = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
