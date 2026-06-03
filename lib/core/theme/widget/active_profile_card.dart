@@ -69,13 +69,13 @@ class ActiveProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).extension<AccentTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final accent = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
     final pingColor = _pingColor(accent, surface);
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      radius: RadiusTokens.rLarge,
+      radius: RadiusTokens.large,
       onTap: onTap,
       child: Row(
         children: [
