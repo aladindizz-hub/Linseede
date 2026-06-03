@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -23,7 +22,7 @@ class AuroraBackground extends HookWidget {
     final accent = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
     final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
 
-    final controller = useAnimationController(duration: const Duration(seconds: 24));
+    final controller = useAnimationController(duration: const Duration(seconds: 40));
     useEffect(() {
       if (animate) {
         controller.repeat();
@@ -39,25 +38,21 @@ class AuroraBackground extends HookWidget {
           child: ColoredBox(color: surface.bgPrimary),
         ),
         Positioned.fill(
-          child: AnimatedBuilder(
-            animation: controller,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: _AuroraPainter(
-                  progress: controller.value,
-                  intensity: intensity,
-                  primary: accent.primary,
-                  secondary: accent.secondary,
-                  tertiary: accent.tertiary,
-                ),
-              );
-            },
-          ),
-        ),
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-            child: const ColoredBox(color: Color(0x00000000)),
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) {
+                return CustomPaint(
+                  painter: _AuroraPainter(
+                    progress: controller.value,
+                    intensity: intensity,
+                    primary: accent.primary,
+                    secondary: accent.secondary,
+                    tertiary: accent.tertiary,
+                  ),
+                );
+              },
+            ),
           ),
         ),
         Positioned.fill(child: child),
@@ -84,39 +79,37 @@ class _AuroraPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final t = progress * math.pi * 2;
-    final blobs = [
+    final blobs = <_Blob>[
       _Blob(
         center: Offset(
-          size.width * (0.25 + 0.08 * math.sin(t)),
-          size.height * (0.22 + 0.06 * math.cos(t * 0.8)),
+          size.width * (0.25 + 0.06 * math.sin(t)),
+          size.height * (0.22 + 0.04 * math.cos(t * 0.8)),
         ),
         radius: size.shortestSide * 0.55,
-        color: primary.withOpacity(0.55 * intensity),
+        color: primary.withOpacity(0.45 * intensity),
       ),
       _Blob(
         center: Offset(
-          size.width * (0.78 + 0.05 * math.cos(t * 1.1)),
-          size.height * (0.35 + 0.07 * math.sin(t * 0.9)),
+          size.width * (0.78 + 0.04 * math.cos(t * 1.1)),
+          size.height * (0.35 + 0.05 * math.sin(t * 0.9)),
         ),
         radius: size.shortestSide * 0.50,
-        color: secondary.withOpacity(0.45 * intensity),
+        color: secondary.withOpacity(0.35 * intensity),
       ),
       _Blob(
         center: Offset(
-          size.width * (0.55 + 0.10 * math.sin(t * 0.7)),
-          size.height * (0.82 + 0.05 * math.cos(t * 1.2)),
+          size.width * (0.55 + 0.08 * math.sin(t * 0.7)),
+          size.height * (0.82 + 0.04 * math.cos(t * 1.2)),
         ),
         radius: size.shortestSide * 0.60,
-        color: tertiary.withOpacity(0.40 * intensity),
+        color: tertiary.withOpacity(0.30 * intensity),
       ),
     ];
 
     for (final b in blobs) {
       final paint = Paint()
-        ..shader = RadialGradient(
-          colors: [b.color, b.color.withOpacity(0.0)],
-          stops: const [0.0, 1.0],
-        ).createShader(Rect.fromCircle(center: b.center, radius: b.radius));
+        ..color = b.color
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
       canvas.drawCircle(b.center, b.radius, paint);
     }
   }
