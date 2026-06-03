@@ -42,13 +42,13 @@ class StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentTheme = Theme.of(context).extension<AccentTheme>()!;
-    final surface = Theme.of(context).extension<SurfaceTheme>()!;
+    final accentTheme = Theme.of(context).extensions[AccentTheme]! as AccentTheme;
+    final surface = Theme.of(context).extensions[SurfaceTheme]! as SurfaceTheme;
     final color = _accentColor(accentTheme);
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      radius: RadiusTokens.rMedium,
+      radius: RadiusTokens.medium,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +115,7 @@ class StatsCard extends StatelessWidget {
 class StatsGrid extends StatelessWidget {
   const StatsGrid({super.key, required this.cards, this.spacing = 10});
 
-  final List<StatsCard> cards;
+  final List cards;
   final double spacing;
 
   @override
@@ -126,7 +126,7 @@ class StatsGrid extends StatelessWidget {
         return Row(
           children: [
             for (int i = 0; i < cards.length; i++) ...[
-              SizedBox(width: width, child: cards[i]),
+              SizedBox(width: width, child: cards[i] as Widget),
               if (i != cards.length - 1) SizedBox(width: spacing),
             ],
           ],
