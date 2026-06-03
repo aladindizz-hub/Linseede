@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/theme/extensions/glass_theme.dart';
 import 'package:hiddify/core/theme/tokens/radius_tokens.dart';
@@ -39,76 +37,57 @@ class GlassCard extends StatelessWidget {
     final surface = intensity == GlassIntensity.strong ? glass.surfaceStrong : glass.surface;
     final border = borderColor ?? glass.border;
 
-    final content = Stack(
-      children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: surface,
-              gradient: gradient,
-              borderRadius: br,
-            ),
-          ),
-        ),
-        if (showReflection)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: r * 1.6,
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(r),
-                    topRight: Radius.circular(r),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [glass.reflection, glass.reflection.withOpacity(0)],
+    Widget content = DecoratedBox(
+      decoration: BoxDecoration(
+        color: surface,
+        gradient: gradient,
+        borderRadius: br,
+        border: Border.all(color: border, width: 1),
+      ),
+      child: Stack(
+        children: [
+          if (showReflection)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: r * 1.6,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(r),
+                      topRight: Radius.circular(r),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [glass.reflection, glass.reflection.withOpacity(0)],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: br,
-                border: Border.all(color: border, width: 1),
-              ),
-            ),
-          ),
-        ),
-        Padding(padding: padding, child: child),
-      ],
-    );
-
-    final blurred = ClipRRect(
-      borderRadius: br,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: glass.blurSigma, sigmaY: glass.blurSigma),
-        child: content,
+          Padding(padding: padding, child: child),
+        ],
       ),
     );
 
-    final tappable = onTap == null
-        ? blurred
-        : Material(
-            color: Colors.transparent,
-            borderRadius: br,
-            child: InkWell(
-              borderRadius: br,
-              onTap: onTap,
-              child: blurred,
-            ),
-          );
+    if (onTap != null) {
+      content = Material(
+        color: Colors.transparent,
+        borderRadius: br,
+        child: InkWell(
+          borderRadius: br,
+          onTap: onTap,
+          child: content,
+        ),
+      );
+    }
 
     return Padding(
       padding: margin ?? EdgeInsets.zero,
-      child: tappable,
+      child: ClipRRect(borderRadius: br, child: content),
     );
   }
 }
